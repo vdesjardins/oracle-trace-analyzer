@@ -1,0 +1,15 @@
+- Check for WAIT #0
+- TODO: Walking the clock
+- ERROR line processing
+- Statement with " not formatted correctly. Ex.: "table"."column"alias
+- Add space before statement resource profile count
+- Verify that all stmt are correctly identified. Is handle enough for that?
+- Code cleanup - constant and documentation
+- Needs to add switchs to the program?
+
+
+- DONE unaccounted-for processing.
+    - DONE Try to count the number of call containing unnaccounted-for time
+    - DONE Report in the global resource statements that contains unaccounted-for time.
+- DONE (Not needed anymore) Update wait list that is used to calculate idle wait time
+- DONE Add Idle wait event statement information. Show only the statement when wait occurs between calls in the same stmt. Show both statement when the wait event occurs between two stmt.

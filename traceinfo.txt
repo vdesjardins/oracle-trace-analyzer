@@ -1,0 +1,347 @@
+ 
+	  	
+Bookmark 	Fixed font 	Go to End
+
+Doc ID: 	Note:39817.1
+Subject: 	Interpreting Raw SQL_TRACE and DBMS_SUPPORT.START_TRACE output
+Type: 	REFERENCE
+Status: 	PUBLISHED
+	
+Content Type: 	TEXT/PLAIN
+Creation Date: 	24-DEC-1997
+Last Revision Date: 	12-NOV-2003
+
+Introduction 
+
+~~~~~~~~~~~~
+
+This is a short reference article which summarises the output format
+
+of the raw SQL_TRACE output file. The second part of the article
+
+describes the additional trace lines that may be enabled by the
+
+DBMS_SUPPORT package. See [NOTE:62294.1] for details of this package.
+
+Note: The format may vary slightly between releases.
+
+----------------------------------------------------------------------------
+
+APPNAME mod='%s' mh=%lu act='%s' ah=%lu
+
+----------------------------------------------------------------------------
+
+APPNAME Application name setting. This only applies to Oracle 7.2
+
+and above. This can be set by using the DBMS_APPLICATION_INFO
+
+package. See [NOTE:30366.1].
+
+mod Module name.
+
+mh Module hash value.
+
+act Action.
+
+ah Action hash value.
+
+----------------------------------------------------------------------------
+
+PARSING IN CURSOR #<CURSOR> len=X dep=X uid=X oct=X lid=X tim=X hv=X ad='X'
+
+<statement>
+
+END OF STMT
+
+----------------------------------------------------------------------------
+
+<CURSOR> Cursor number.
+
+len Length of SQL statement.
+
+dep Recursive depth of the cursor.
+
+uid Schema user id of parsing user.
+
+oct Oracle command type.
+
+lid Privilege user id.
+
+tim Timestamp.
+
+Pre-Oracle9i, the times recorded by Oracle only have a resolution
+
+of 1/100th of a second (10mS). As of Oracle9i some times are
+
+available to microsecond accuracy (1/1,000,000th of a second).
+
+The timestamp can be used to determine times between points
+
+in the trace file.
+
+The value is the value in V$TIMER when the line was written.
+
+If there are TIMESTAMPS in the file you can use the difference
+
+between 'tim' values to determine an absolute time.
+
+hv Hash id.
+
+ad SQLTEXT address (see <View:V$SQLAREA> and <View:V$SQLTEXT>).
+
+<statement> The actual SQL statement being parsed.
+
+----------------------------------------------------------------------------
+
+PARSE ERROR #%d:len=%ld dep=%d uid=%ld oct=%d lid=%ld tim=%lu err=%d
+
+<statement> ...
+
+----------------------------------------------------------------------------
+
+PARSE ERROR In Oracle 7.2+ parse errors are reported to the trace file.
+
+len Length of SQL statement.
+
+dep Recursive depth of the statement
+
+uid User id.
+
+oct Oracle command type (if known).
+
+lid Privilege user id.
+
+tim Timestamp.
+
+err Oracle error code (e.g. ORA-XXXXX) reported
+
+<statement> The SQL statement that errored. If this contains a password,
+
+the statement is truncated as indicated by '...' at the end.
+
+----------------------------------------------------------------------------
+
+PARSE #<CURSOR>:c=0,e=0,p=0,cr=0,cu=0,mis=0,r=0,dep=0,og=4,tim=0
+
+EXEC #<CURSOR>:c=0,e=0,p=0,cr=0,cu=0,mis=0,r=0,dep=0,og=4,tim=0
+
+FETCH #<CURSOR>:c=0,e=0,p=0,cr=0,cu=0,mis=0,r=0,dep=0,og=4,tim=0
+
+UNMAP #<CURSOR>:c=0,e=0,p=0,cr=0,cu=0,mis=0,r=0,dep=0,og=4,tim=0
+
+----------------------------------------------------------------------------
+
+- OPERATIONS:
+
+PARSE Parse a statement.
+
+EXEC Execute a pre-parsed statement.
+
+FETCH Fetch rows from a cursor.
+
+UNMAP If the cursor uses a temporary table, when the cursor is
+
+closed you see an UNMAP when we free up the temporary table
+
+locks.(Ie: free the lock, delete the state object, free the
+
+temp segment)
+
+In tkprof, UNMAP stats get added to the EXECUTE statistics.
+
+SORT UNMAP
+
+As above, but for OS file sorts or TEMP table segments.
+
+c CPU time (100th's of a second in Oracle7 ,8 and 9).
+
+e Elapsed time (100th's of a second Oracle7, 8
+
+Microseconds in Oracle 9 onwards).
+
+p Number of physical reads.
+
+cr Number of buffers retrieved for CR reads.
+
+cu Number of buffers retrieved in current mode.
+
+mis Cursor missed in the cache.
+
+r Number of rows processed.
+
+dep Recursive call depth (0 = user SQL, >0 = recursive).
+
+og Optimizer goal: 1=All_Rows, 2=First_Rows, 3=Rule, 4=Choose
+
+tim Timestamp (large number in 100ths of a second). Use this to
+
+determine the time between any 2 operations.
+
+----------------------------------------------------------------------------
+
+ERROR #%d:err=%d tim=%lu
+
+----------------------------------------------------------------------------
+
+SQL Error shown after an execution or fetch error.
+
+err Oracle error code (e.g. ORA-XXXXX) at the top of the stack.
+
+tim Timestamp.
+
+----------------------------------------------------------------------------
+
+STAT #<CURSOR> id=N cnt=0 [pid=0 pos=0 obj=0 op='SORT AGGREGATE ']
+
+----------------------------------------------------------------------------
+
+STAT Lines report explain plan statistics for the numbered <CURSOR>.
+
+<CURSOR> Cursor which the statistics apply to.
+
+id Line of the explain plan which the row count applies to (starts
+
+at line 1). This is effectively the row source row count
+
+for all row sources in the execution tree.
+
+cnt Number of rows for this row source.
+
+As of 7.3.3 the items in '[...]' are also reported:
+
+pid Parent id of this row source.
+
+pos Position in explain plan.
+
+obj Object id of row source (if this is a base object).
+
+op='...' The row source access operation.
+
+These let you know the 'run time' explain plan.
+
+----------------------------------------------------------------------------
+
+XCTEND rlbk=%d rd_only=%d
+
+----------------------------------------------------------------------------
+
+XCTEND A transaction end marker.
+
+rlbk 1 if a rollback was performed, 0 if no rollback (commit).
+
+rd_only 1 if transaction was read only, 0 if changes occurred.
+
+----------------------------------------------------------------------------
+
+======================================================================
+
+The items below are only output if WAITS or BINDS are being traced.
+
+These can be enabled with the DBMS_SUPPORT package.
+
+======================================================================
+
+----------------------------------------------------------------------------
+
+BINDS #%d:
+
+bind 0: dty=2 mxl=22(22) mal=00 scl=00 pre=00 oacflg=03 oacfl2=0 size=24 offset=0
+
+bfp=02fedb44 bln=22 avl=00 flg=05
+
+value=10
+
+----------------------------------------------------------------------------
+
+BIND Variables bound to a cursor.
+
+bind N The bind position being bound.
+
+dty Data type (see <Glossary:DataTypes>).
+
+mxl Maximum length of the bind variable (private max len in paren).
+
+mal Array length.
+
+scl Scale.
+
+pre Precision.
+
+oacflg Special flag indicating bind options
+
+oacflg2 Continuation of oacflg
+
+size Amount of memory to be allocated for this chunk
+
+offset Offset into this chunk for this bind buffer
+
+bfp Bind address.
+
+bln Bind buffer length.
+
+avl Actual value length (array length too).
+
+flg Special flag indicating bind status
+
+value The actual value of the bind variable.
+
+Numbers show the numeric value, strings show the string etc...
+
+It is also possible to see "bind 6: (No oacdef for this bind)", if no
+
+separate bind buffer exists.
+
+----------------------------------------------------------------------------
+
+WAIT #<CURSOR>: nam="<event name>" ela=0 p1=0 p2=0 p3=0
+
+----------------------------------------------------------------------------
+
+WAIT An event that we waited for.
+
+nam What was being waited for .
+
+The wait events here are the same as are seen in
+
+<View:V$SESSION_WAIT>. For any Oracle release a full list of
+
+wait events and the values in P1, P2 and P3 below can be seen
+
+in <View:V$EVENT_NAME>
+
+ela Elapsed time for the operation.
+
+p1 P1 for the given wait event.
+
+p2 P2 for the given wait event.
+
+p3 P3 for the given wait event.
+
+Example (Full Table Scan):
+
+WAIT #1: nam="db file scattered read" ela= 5 p1=4 p2=1435 p3=25
+
+WAITing under CURSOR no 1
+
+for "db file scattered read"
+
+We waited 0.05 seconds
+
+For a read of: File 4, start block 1435, for 25 Oracle blocks
+
+Example (Index Scan):
+
+WAIT #1: nam="db file sequential read" ela= 4 p1=4 p2=1224 p3=1
+
+WAITing under CURSOR no 1
+
+for "db file sequential read"
+
+We waited 0.04 seconds for a single block read (p3=1)
+
+from file 4, block 1224
+
+----------------------------------------------------------------------------
+
+.
+	Copyright (c) 1995,2000 Oracle Corporation. All Rights Reserved. Legal Notices and Terms of Use. 	

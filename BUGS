@@ -1,0 +1,10 @@
+Bug: 
+- DONE Recursive SQL List not shown
+- Recursive Resource Profile not shown
+   - DONE Debug dubplicate. Maybe show number of executions
+   - Why Refresh all indexes does not show any recursive SQL?
+- DONE Caused by negative values. Wrong value in Stmt Resource Profile for Parse. Ex.:
+  Parse           2      -0.050s      -0.195s  4294967284  4294967153  4294967276           0
+
+
+
