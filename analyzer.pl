@@ -69,6 +69,8 @@ my $gsc_actionHash = 'Warning: Not Parsed';
 my $gsc_trcStartTime = 0;
 my $gsc_trcEndTime = 0;    
 
+my $gsc_initialWaitDiscarted = 0;
+
 
 main(*ARGV);
 
@@ -266,23 +268,27 @@ sub processWaits {
         }
     }
 
-    # build ressource profile
-    $gha_globRespTimeComp->{$w->{'name'}}->{'elapse'} += $w->{'elapse'};
-    $gha_globRespTimeComp->{$w->{'name'}}->{'nbcalls'} ++;
-    $sumElapseWaits += $w->{'elapse'};
-    
-    # Set the previous depth. Will be used to determine if a wait event is a idle one
-    if (exists($gha_keyMapping->{$w->{'id'}}->{'depth'}))
-    {
-        $w->{'prevDepth'} = $gha_keyMapping->{$w->{'id'}}->{'depth'};
-        $w->{'prevHandle'} = $gha_keyMapping->{$w->{'id'}}->{'handle'};
+    if (defined($w->{'time'}) && $gsc_initialWaitDiscarted == 0) {
+      $gsc_initialWaitDiscarted = 1;
+    } else {
+        # build ressource profile
+        $gha_globRespTimeComp->{$w->{'name'}}->{'elapse'} += $w->{'elapse'};
+        $gha_globRespTimeComp->{$w->{'name'}}->{'nbcalls'} ++;
+        $sumElapseWaits += $w->{'elapse'};
+        
+        # Set the previous depth. Will be used to determine if a wait event is a idle one
+        if (exists($gha_keyMapping->{$w->{'id'}}->{'depth'}))
+        {
+            $w->{'prevDepth'} = $gha_keyMapping->{$w->{'id'}}->{'depth'};
+            $w->{'prevHandle'} = $gha_keyMapping->{$w->{'id'}}->{'handle'};
+        }
+        else {
+            $w->{'prevDepth'} = 0;
+            $w->{'prevHandle'} = 'invalid';
+        }
+        
+        push(@{$gha_tempwaits->{$w->{'id'}}->{'collection'}}, $w);
     }
-    else {
-        $w->{'prevDepth'} = 0;
-        $w->{'prevHandle'} = 'invalid';
-    }
-    
-    push(@{$gha_tempwaits->{$w->{'id'}}->{'collection'}}, $w);
 }
 
 sub addResourceForProfile {
@@ -363,6 +369,7 @@ sub cursorAction {
     # Set the timestamp. Used for total elapse time accounting in the trace file
     if ($gsc_trcStartTime == 0)  {
         $gsc_trcStartTime = $time;
+        $gsc_initialWaitDiscarted = 1;
     }
     else {
         $gsc_trcEndTime = $time;
